@@ -48,6 +48,8 @@ func loadGeoJson(fname string) *geojson.FeatureCollection {
 	if err != nil {
 		log.Print("Can't read file:", err)
 		panic("load json")
+	} else {
+		fmt.Printf("Loading GeoJson file: %s\n", fname)
 	}
 
 	fc, _ := geojson.UnmarshalFeatureCollection(bytes)
@@ -107,6 +109,7 @@ func outputPGM(f *Feature, fname *string, fcs *geojson.FeatureCollection) {
 		log.Fatal("Can't open file %s", *fname)
 	}
 	defer fp.Close()
+	fmt.Printf("Writing PGM image file: %s\n", *fname)
 	pnm.Encode(fp, img, pnm.PGM)
 
 }
@@ -120,7 +123,7 @@ func scanFeatures(fcs *geojson.FeatureCollection) *Feature {
 	}
 	fclen := len(fcs.Features)
 	//	obs := make([]*rvo.Vector2, 0, fclen)
-	log.Printf("Fetures: %d", fclen)
+	fmt.Printf("Checking GeoJson features: %d\n", fclen)
 	for i := 0; i < fclen; i++ {
 		geom := fcs.Features[i].Geometry
 		//log.Printf("Geom %d: %s %v", i, geom.GeoJSONType(), geom)
@@ -145,7 +148,7 @@ func scanFeatures(fcs *geojson.FeatureCollection) *Feature {
 			mp := geom.(orb.MultiPolygon)
 			ls := mp[0][0]
 			ll := len(ls) // linestring
-			log.Printf("Multi:obs len %d:%d", i, ll)
+			fmt.Printf("Multi:obs len %d:%d\n", i, ll)
 			for j := 0; j < ll; j++ {
 				setMinMax(f, ls[j][0], ls[j][1])
 			}
@@ -153,7 +156,7 @@ func scanFeatures(fcs *geojson.FeatureCollection) *Feature {
 			mp := geom.(orb.Polygon)
 			ls := mp[0]
 			ll := len(ls) // linestring
-			log.Printf("Poly:obs len %d:%d", i, ll)
+			fmt.Printf("Scanning Polygons len %d:%d\n", i, ll)
 			for j := 0; j < ll; j++ {
 				setMinMax(f, ls[j][0], ls[j][1])
 			}
