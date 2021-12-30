@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/png"
 	"io/ioutil"
 	"log"
 	"math"
@@ -30,6 +31,7 @@ var (
 	yamlFname = flag.String("yaml", "out.yaml", "YAML output file name")
 	jsonFname = flag.String("json", "out.json", "JSON output file name")
 	pgmFile   = flag.String("pgm", "out.pgm", "PGM output file name")
+	pngFile   = flag.String("png", "", "PNG output file name")
 	width     = flag.Int("width", 1280, "Output PGM file width")
 	//	store           = flag.Bool("store", false, "store csv data")
 )
@@ -120,6 +122,16 @@ func outputPGM(f *Feature, fname *string, fcs *geojson.FeatureCollection) {
 	defer fp.Close()
 	fmt.Printf("Writing PGM image file: %s\n", *fname)
 	pnm.Encode(fp, img, pnm.PGM)
+
+	if *pngFile != "" {
+		fp2, err2 := os.Create(*pngFile)
+		if err2 != nil {
+			log.Fatal("Can't open file %s", *pngFile)
+		}
+		defer fp2.Close()
+		fmt.Printf("Writing PNG image file: %s\n", *pngFile)
+		png.Encode(fp2, img)
+	}
 
 }
 
