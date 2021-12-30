@@ -10,6 +10,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"time"
 
 	pnm "github.com/jbuchbinder/gopnm"
 	"github.com/paulmach/orb"
@@ -76,6 +77,7 @@ func setMinMax(f *Feature, lon, lat float64) {
 }
 
 func outputPGM(f *Feature, fname *string, fcs *geojson.FeatureCollection) {
+	fmt.Printf("Generating Img from GeoJson\n")
 
 	fclen := len(fcs.Features)
 	f.Scale = float64(f.DLon) / float64(*width) // use Scale as a distance for each pixel.
@@ -84,7 +86,7 @@ func outputPGM(f *Feature, fname *string, fcs *geojson.FeatureCollection) {
 	f.PGMHeight = int(math.Ceil(f.DLat / f.Scale))
 
 	img := image.NewGray(image.Rect(0, 0, f.PGMWidth, f.PGMHeight))
-
+	ticker := time.NewTicker(time.Second) // leaks www.
 	for i := 0; i < fclen; i++ {
 		geom := fcs.Features[i].Geometry
 		if geom.GeoJSONType() == "LineString" {
@@ -94,6 +96,12 @@ func outputPGM(f *Feature, fname *string, fcs *geojson.FeatureCollection) {
 			mp := geom.(orb.Polygon)
 
 			for x := 0; x < f.PGMWidth; x++ {
+				select {
+				case <-ticker.C:
+					fmt.Printf("%d%% ", int(100*x/f.PGMWidth))
+				default:
+
+				}
 				for y := 0; y < f.PGMHeight; y++ {
 					// polygon : mp[0] => outer line, mp[i>0] => holes
 					if planar.PolygonContains(mp, orb.Point{f.MinLon + float64(x)*f.Scale, f.MaxLat - float64(y)*f.Scale}) {
@@ -101,6 +109,7 @@ func outputPGM(f *Feature, fname *string, fcs *geojson.FeatureCollection) {
 					}
 				}
 			}
+			fmt.Print("\n")
 		}
 	}
 
@@ -196,7 +205,8 @@ func main() {
 		}
 		defer file.Close()
 
-		b, _ := json.Marshal(&feature)
+		//		b, _ := json.Marshal(&feature)
+		b, _ := json.MarshalIndent(&feature, "", "   ")
 		file.Write(b)
 	}
 	if *yamlFname != "" {
